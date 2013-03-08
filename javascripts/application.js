@@ -1,46 +1,80 @@
 
-var currentValue,
-    ticker,
-    socketEvents,
-    raiseValue;
+var messages,
+    source;
 
+var lineTemplate = _.template( "<div class='line'><strong><%= name %></strong>: <%- text %></div>" );
+var typerTemplate = _.template( "<div class='typing'><%= names.join(', ') %> <%= verb %> typing...</div>" );
 
-var snd = function( a, b ){ return b; };
+function addNewMessage( message ){
+  html = $( lineTemplate( message ) ).hide();
+  html.insertBefore( ".typers" );
+  html.slideDown( 300 );
+}
 
-var initSocket = function(ticker){
-  var bus = new Bacon.Bus();
+function renderTypers( names ){
+  verb = names.length > 1 ? "are" : "is";
+  html = names.length > 0 ? typerTemplate( { names: names, verb: verb } ) : "";
+  $( ".typers" ).html( html );
+}
+
+function clearMessageInput(){
+  $( ".message" ).val( "" ).focus();
+}
+
+function enterPressed( event ){
+  return event.keyCode == 13;
+}
+
+function getName(){
+  return $( ".name" ).val();
+}
+
+var initSocket = function( newMessageSource, typingSource ){
+  var messagesBus = new Bacon.Bus();
+  var typersBus = new Bacon.Bus();
 
   var socket = io.connect( "http://localhost:3030" );
 
-  ticker.onValue( function(value){
-    socket.send(value);
+  newMessageSource.onValue( function( newMessage ){
+    socket.emit( "newMessage", newMessage );
+  });
+
+  typingSource.onValue( function( name ){
+    socket.emit( "typing", name );
   });
 
   socket.on( "connect", function(){
-    socket.on( "message", function( value ){
-      bus.push( value );
+    socket.on( "messages", function( newMessage ){
+      messagesBus.push( newMessage );
+    });
+
+    socket.on( "typers", function( names ){
+      typersBus.push( names );
     });
   });
-  return bus;
+
+  return {
+    messages: messagesBus,
+    typers: typersBus
+  };
 };
-
-
-var displayCurrentValue = function( value ){
-  $( "#valueHolder" ).html( value );
-};
-
 
 $(function(){
 
-  raiseValue = $( "input" ).asEventStream( "change" ).map(".target").map(".value").scan( 1, snd );
+  var textInputEvent = $( ".message" ).asEventStream( "keydown" );
+  var enterPressedEvent = textInputEvent.filter( enterPressed ).filter( ".target.value" );
+  source = enterPressedEvent.map( ".target.value" ).map( function( text ){
+    return {
+      text: text,
+      name: getName()
+    };
+  });
+  var typing = textInputEvent.map( getName );
 
-  // Little ticker, he'll signal that something's happening
-  ticker = raiseValue.sample( 1000 );
+  pipe = initSocket( source, typing );
+  enterPressedEvent.onValue( clearMessageInput );
 
-  socketEvents = initSocket( ticker );
-  currentValue = socketEvents.scan( 0, snd );
+  pipe.messages.onValue( addNewMessage );
+  pipe.typers.onValue( renderTypers );
 
-
-  currentValue.onValue( displayCurrentValue );
-  
 });

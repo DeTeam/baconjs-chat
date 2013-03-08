@@ -4,11 +4,30 @@
     <script src="http://0.0.0.0:3030/socket.io/socket.io.js"></script>
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
     <script src="/javascripts/libs/bacon.js"></script>
+    <script src="/javascripts/libs/underscore.js"></script>
 
     <script src="/javascripts/application.js"></script>
+    <style>
+      .chat {
+        height: 400px;
+        width: 500px;
+        overflow: auto;
+        border: 1px solid #eee;
+      }
+      .controls, .chat {
+        margin: 10px;
+      }
+    </style>
   </head>
   <body>
-    <input type="number" min="-10" max="10" value="1" />
-    <div id="valueHolder"></div>
+    <div class="chat">
+
+      <div class="typers">
+      </div>
+    </div>
+    <div class="controls">
+      <input placeholder="Name" type="text" value="guest" class="name" />
+      <input placeholder="Message" type="text" size="60" autofocus class="message" /> 
+    </div>
   </body>
 </html>
