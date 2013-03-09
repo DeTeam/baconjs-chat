@@ -2,8 +2,8 @@
 var messages,
     source;
 
-var lineTemplate = _.template( "<div class='line'><strong><%= name %></strong>: <%- text %></div>" );
-var typerTemplate = _.template( "<div class='typing'><%= names.join(', ') %> <%= verb %> typing...</div>" );
+var lineTemplate = _.template( "<div class='line'><strong><%= name %></strong>: <%- text %></div>" ),
+    typerTemplate = _.template( "<div class='typing'><%= names.join(', ') %> <%= verb %> typing...</div>" );
 
 function addNewMessage( message ){
   html = $( lineTemplate( message ) ).hide();
@@ -29,7 +29,7 @@ function getName(){
   return $( ".name" ).val();
 }
 
-var initSocket = function( newMessageSource, typingSource ){
+function initSocket( newMessageSource, typingSource ){
   var messagesBus = new Bacon.Bus();
   var typersBus = new Bacon.Bus();
 
@@ -57,7 +57,7 @@ var initSocket = function( newMessageSource, typingSource ){
     messages: messagesBus,
     typers: typersBus
   };
-};
+}
 
 $(function(){
 
